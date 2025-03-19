@@ -3,7 +3,9 @@
     "assemblyscript": "^0.27.35"
   },
   "dependencies": {
-    "commander": "^13.1.0"
+    "commander": "^13.1.0",
+    "dotenv": "^16.4.7",
+    "got": "^14.4.6"
   },
   "type": "module"
 }
