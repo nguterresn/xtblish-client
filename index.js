@@ -18,7 +18,7 @@ const options = program.opts();
 if (options.sign) {
   const error = await compileAssemblyScript('./assembly/index.ts')
   if (!error) {
-    const binary = hashWasmFile(process.env.AS_FILE)
+    const binary = hashWasmFile()
     const response = await postApplication(binary)
 
     console.log(`Status Code: ${response.statusCode} Body: ${JSON.stringify(response.body)}`)
@@ -34,11 +34,12 @@ async function compileAssemblyScript(pathToIndex) {
   return error ? error : 0
 }
 
-function hashWasmFile(pathToWasmFile) {
-  if (!fs.statSync(pathToWasmFile)) {
+function hashWasmFile() {
+  const filePath = process.env.AS_FILE
+  if (!fs.statSync(filePath)) {
     return
   }
-  const wasmFile = fs.readFileSync(pathToWasmFile)
+  const wasmFile = fs.readFileSync(filePath)
 
   let dataToHash = Buffer.alloc(512 + 4, 0x00) // in order: config, size
   dataToHash = Buffer.concat([dataToHash, wasmFile]);
