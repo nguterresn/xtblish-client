@@ -57,8 +57,11 @@ async function compileAssemblyScript(pathToIndex: string): Promise<Result<number
 
 function hashWasmFile(): Result<Buffer<ArrayBuffer>> {
   const filePath: string | undefined = process.env.AS_FILE
-  if (!filePath || !fs.statSync(filePath)) {
-    return failure(new Error("File not found / File does not exist!"));
+  if (!filePath) {
+    return failure(new Error("Assembly Script file (AS_FILE) not defined!"));
+  }
+  if (!fs.statSync(filePath)) {
+    return failure(new Error(`Assembly script file under '${filePath}' is not found!`));
   }
 
   const wasmFile = fs.readFileSync(filePath)
