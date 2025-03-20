@@ -14,8 +14,13 @@ import type { Result, Ok } from "./utils.ts";
 
 dotenv.config()
 
-program.option('--sign');
-program.parse();
+program.name('xtblish CLI')
+  .description('Send WASM files to the xtblish server.')
+  .version('1.0.0')
+  .requiredOption('-s, --source <path>', 'input Assembly Script source file path (e.g. index.ts)')
+  .requiredOption('-u, --user <id>', 'input your user ID (e.g. 123)')
+  .option('-d, --debug', 'use the debug build')
+  .parse();
 const options = program.opts();
 
 main();
@@ -25,16 +30,16 @@ async function main() {
   if (isError(check)) {
     return;
   }
-  const result = await compileAssemblyScript('./assembly/index.ts')
+  const result = await compileAssemblyScript(options.source)
   if (isError(result)) {
     return;
   }
-  const hashResult = hashWasmFile()
+  const hashResult = hashWasmFile(`build/${options.debug ? "debug" : "release"}.wasm`)
   if (isError(hashResult)) {
     return;
   }
 
-  const response = await postApplication((hashResult as Ok<Buffer<ArrayBuffer>>).data)
+  const response = await postApplication((hashResult as Ok<Buffer<ArrayBuffer>>).data, options.user)
   if (isError(response)) {
     return;
   }
@@ -50,6 +55,10 @@ async function main() {
 // -------------------------- //  // -------------------------- // // -------------------------- //
 
 async function compileAssemblyScript(pathToIndex: string): Promise<Result<number>> {
+  if (!fs.statSync(pathToIndex)) {
+    return failure(`Assembly script file under '${pathToIndex}' is not found!`);
+  }
+
   const { error, stdout, stderr, stats } = await asc.main([pathToIndex, "--optimize"]);
   if (error) {
     console.log(stderr);
@@ -59,13 +68,12 @@ async function compileAssemblyScript(pathToIndex: string): Promise<Result<number
   return ok(0);
 }
 
-function hashWasmFile(): Result<Buffer<ArrayBuffer>> {
-  const filePath: string | undefined = process.env.AS_FILE
+function hashWasmFile(filePath: string): Result<Buffer<ArrayBuffer>> {
   if (!filePath) {
-    return failure("Assembly Script file (AS_FILE) not defined!");
+    return failure("WASM file (AS_FILE) not defined!");
   }
   if (!fs.statSync(filePath)) {
-    return failure(`Assembly script file under '${filePath}' is not found!`);
+    return failure(`WASM file under '${filePath}' is not found!`);
   }
 
   const wasmFile = fs.readFileSync(filePath)
@@ -82,10 +90,10 @@ function hashWasmFile(): Result<Buffer<ArrayBuffer>> {
   return ok(Buffer.concat([hash, dataToHash]));
 }
 
-async function postApplication(data: Buffer<ArrayBuffer>): Promise<Result<PlainResponse>> {
+async function postApplication(data: Buffer<ArrayBuffer>, userId: number): Promise<Result<PlainResponse>> {
   let response
   try {
-    response = await got.post(`${process.env.SERVER_URL}/firmware/${process.env.DEVICE_ID}`, {
+    response = await got.post(`${process.env.SERVER_URL}/firmware/${userId}`, {
       body: data,
       responseType: 'json',
       headers: {
@@ -94,24 +102,18 @@ async function postApplication(data: Buffer<ArrayBuffer>): Promise<Result<PlainR
       },
     });
   } catch (e: any) {
-    return failure(`On attempt to POST /${process.env.SERVER_URL}/firmware/${process.env.DEVICE_ID}: ${e}`);
+    return failure(`On attempt to POST /${process.env.SERVER_URL}/firmware/${userId}: ${e}`);
   }
 
   return ok(response);
 }
 
 function checkEnvVariables(): Result<number> {
-  if (process.env.SERVER_URL) {
+  if (!process.env.SERVER_URL) {
     return failure("Cannot find 'SERVER_URL' under .env");
   }
-  if (process.env.HMAC_SECRET) {
+  if (!process.env.HMAC_SECRET) {
     return failure("Cannot find 'HMAC_SECRET' under .env");
-  }
-  if (process.env.AS_FILE) {
-    return failure("Cannot find 'AS_FILE' under .env");
-  }
-  if (process.env.USER_ID) {
-    return failure("Cannot find 'USER_ID' under .env");
   }
 
   return ok(0);
