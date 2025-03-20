@@ -18,6 +18,6 @@ export function ok<T>(_data: T): Ok<T> {
   return { ok: true, data: _data };
 }
 
-export function failure(_error: Error): Failure {
-  return { ok: false, error: _error };
+export function failure(message: string): Failure {
+  return { ok: false, error: new Error(message) };
 }

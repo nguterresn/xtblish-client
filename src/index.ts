@@ -21,6 +21,10 @@ const options = program.opts();
 main();
 
 async function main() {
+  const check = checkEnvVariables();
+  if (isError(check)) {
+    return;
+  }
   const result = await compileAssemblyScript('./assembly/index.ts')
   if (isError(result)) {
     return;
@@ -49,7 +53,7 @@ async function compileAssemblyScript(pathToIndex: string): Promise<Result<number
   const { error, stdout, stderr, stats } = await asc.main([pathToIndex, "--optimize"]);
   if (error) {
     console.log(stderr);
-    return failure(error);
+    return failure(error.message);
   }
 
   return ok(0);
@@ -58,10 +62,10 @@ async function compileAssemblyScript(pathToIndex: string): Promise<Result<number
 function hashWasmFile(): Result<Buffer<ArrayBuffer>> {
   const filePath: string | undefined = process.env.AS_FILE
   if (!filePath) {
-    return failure(new Error("Assembly Script file (AS_FILE) not defined!"));
+    return failure("Assembly Script file (AS_FILE) not defined!");
   }
   if (!fs.statSync(filePath)) {
-    return failure(new Error(`Assembly script file under '${filePath}' is not found!`));
+    return failure(`Assembly script file under '${filePath}' is not found!`);
   }
 
   const wasmFile = fs.readFileSync(filePath)
@@ -70,7 +74,7 @@ function hashWasmFile(): Result<Buffer<ArrayBuffer>> {
   dataToHash = Buffer.concat([dataToHash, wasmFile]);
   dataToHash.writeUInt32LE(wasmFile.length, 512) // Write size of main.wasm
   if (!process.env.HMAC_SECRET) {
-    return failure(new Error("HMAC Secret does not exist!"));
+    return failure("HMAC Secret does not exist!");
   }
 
   const hash = crypto.createHmac('sha256', process.env.HMAC_SECRET).update(dataToHash).digest()
@@ -90,8 +94,25 @@ async function postApplication(data: Buffer<ArrayBuffer>): Promise<Result<PlainR
       },
     });
   } catch (e: any) {
-    return failure(new Error(e));
+    return failure(`On attempt to POST /${process.env.SERVER_URL}/firmware/${process.env.DEVICE_ID}: ${e}`);
   }
 
   return ok(response);
+}
+
+function checkEnvVariables(): Result<number> {
+  if (process.env.SERVER_URL) {
+    return failure("Cannot find 'SERVER_URL' under .env");
+  }
+  if (process.env.HMAC_SECRET) {
+    return failure("Cannot find 'HMAC_SECRET' under .env");
+  }
+  if (process.env.AS_FILE) {
+    return failure("Cannot find 'AS_FILE' under .env");
+  }
+  if (process.env.USER_ID) {
+    return failure("Cannot find 'USER_ID' under .env");
+  }
+
+  return ok(0);
 }
