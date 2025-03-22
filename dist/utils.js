@@ -10,9 +10,6 @@ export function isOk(result) {
 export function ok(_data) {
     return { ok: true, data: _data };
 }
-export function failure(_error) {
-    return { ok: false, error: _error };
-}
-export function getData(result) {
-    return result.data;
+export function failure(message) {
+    return { ok: false, error: new Error(message) };
 }

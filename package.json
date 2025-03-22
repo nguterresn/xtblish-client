@@ -1,6 +1,6 @@
 {
   "name": "xtblish-client",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Compile, sign and send a WASM binary to xtblish",
   "main": "dist/index.js",
   "files": [
@@ -9,16 +9,23 @@
   "keywords": [
     "xtblish"
   ],
+  "bin": {
+    "xtblish": "./dist/index.js"
+  },
   "author": "Nuno Nogueira",
   "license": "MIT",
   "scripts": {
     "build": "tsc",
-    "start": "node src/index.ts",
-    "dev": "tsc && node src/index.ts"
+    "start": "node ./dist/index.js",
+    "dev": "tsc && node ./dist/index.js",
+    "test": "node --experimental-vm-modules ./node_modules/.bin/jest"
   },
   "devDependencies": {
     "@types/express": "^5.0.1",
+    "@types/jest": "^29.5.14",
     "@types/node": "^22.13.10",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.6",
     "typescript": "^5.8.2"
   },
   "dependencies": {

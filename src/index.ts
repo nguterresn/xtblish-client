@@ -1,16 +1,13 @@
-// Usage of ASC
-// https://www.assemblyscript.org/compiler.html#programmatic-usage
-
 import { program } from "commander"
 import got from "got";
 import asc from "assemblyscript/asc";
 import crypto from "crypto"
 import fs from "fs"
 import dotenv from "dotenv"
-import { failure, ok, isError } from "./utils.ts";
+import { failure, ok, isError } from "./utils.js";
 
 import type { PlainResponse } from "got";
-import type { Result, Ok } from "./utils.ts";
+import type { Result, Ok } from "./utils.js";
 
 dotenv.config()
 
