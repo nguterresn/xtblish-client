@@ -11,7 +11,7 @@ import type { Result, Ok } from "./utils.js";
 
 interface xtblishConfig {
   secret: string;
-  asFilePath: string;
+  outDir: string;
 }
 
 dotenv.config();
@@ -23,7 +23,6 @@ program
   .requiredOption("-s, --source <path>", "input Assembly Script source file path (e.g. index.ts)")
   .requiredOption("-u, --user <id>", "input your user ID (e.g. 123)")
   .requiredOption("-c, --config <path>", "input configuration file, e.g. xtblish.json")
-  .option("-d, --debug", "use the debug build")
   .parse();
 const options = program.opts();
 
@@ -34,14 +33,14 @@ async function main() {
   if (isError(jsonResult)) {
     return;
   }
-  const compileResult = await compileAssemblyScript(options.source);
+  const compileResult = await compileAssemblyScript(
+    options.source,
+    (jsonResult as Ok<xtblishConfig>).data
+  );
   if (isError(compileResult)) {
     return;
   }
-  const hashResult = hashWasmFile(
-    `build/${options.debug ? "debug" : "release"}.wasm`,
-    (jsonResult as Ok<xtblishConfig>).data.secret
-  );
+  const hashResult = hashWasmFile((jsonResult as Ok<xtblishConfig>).data);
   if (isError(hashResult)) {
     return;
   }
@@ -63,38 +62,56 @@ async function main() {
 // -------------------------- //  // -------------------------- // // -------------------------- //
 // -------------------------- //  // -------------------------- // // -------------------------- //
 
-async function compileAssemblyScript(pathToIndex: string): Promise<Result<number>> {
-  if (!fs.statSync(pathToIndex)) {
-    return failure(`Assembly script file under '${pathToIndex}' is not found!`);
-  }
-
-  const { error, stdout, stderr, stats } = await asc.main([pathToIndex, "--optimize"]);
-  if (error) {
-    console.log(stderr);
-    return failure(error.message);
+async function compileAssemblyScript(
+  source: string,
+  config: xtblishConfig
+): Promise<Result<number>> {
+  try {
+    fs.statSync(source);
+    // Release alternative:
+    // asc --outFile build/release.wasm --textFile build/release.wat --sourceMap false --optimizeLevel 3 --shrinkLevel 0 --converge false --noAssert false --bindings esm
+    const { error, stdout, stderr, stats } = await asc.main([
+      source,
+      "--outFile",
+      `${config.outDir}/debug.wasm`,
+      "--textFile",
+      `${config.outDir}/debug.wat`,
+      "--debug",
+      "--sourceMap",
+      "false",
+      "--bindings",
+      "esm",
+    ]);
+    if (error) {
+      console.log(stderr);
+      return failure(error.message);
+    }
+  } catch (e) {
+    return failure(`Error -> ${e}`);
   }
 
   return ok(0);
 }
 
-function hashWasmFile(filePath: string, secret: string): Result<Buffer<ArrayBuffer>> {
-  if (!filePath) {
-    return failure("WASM file (AS_FILE) not defined!");
-  }
-  if (!fs.statSync(filePath)) {
-    return failure(`WASM file under '${filePath}' is not found!`);
+function hashWasmFile(config: xtblishConfig): Result<Buffer<ArrayBuffer>> {
+  const filePath = `${config.outDir}/debug.wasm`;
+
+  if (!config.secret) {
+    return failure("Secret does not exist!");
   }
 
-  const wasmFile = fs.readFileSync(filePath);
+  let wasmFile = Buffer.from("");
+  try {
+    wasmFile = fs.readFileSync(filePath);
+  } catch (e) {
+    return failure(`Failed to read from '${filePath}' error ${e}`);
+  }
 
   let dataToHash = Buffer.alloc(512 + 4, 0x00); // in order: config, size
   dataToHash = Buffer.concat([dataToHash, wasmFile]);
   dataToHash.writeUInt32LE(wasmFile.length, 512); // Write size of main.wasm
-  if (!secret) {
-    return failure("Secret does not exist!");
-  }
 
-  const hash = crypto.createHmac("sha256", secret).update(dataToHash).digest();
+  const hash = crypto.createHmac("sha256", config.secret).update(dataToHash).digest();
 
   return ok(Buffer.concat([hash, dataToHash]));
 }
@@ -127,9 +144,6 @@ function checkEnvVariables(config: string): Result<xtblishConfig> {
   }
   if (!config) {
     return failure("Configuration path is empty");
-  }
-  if (!fs.statSync(config)) {
-    return failure(`Cannot find configuration file at ${config}`);
   }
 
   let obj;

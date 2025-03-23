@@ -6,64 +6,82 @@ import fs from "fs";
 import dotenv from "dotenv";
 import { failure, ok, isError } from "./utils.js";
 dotenv.config();
-program.name('xtblish CLI')
-    .description('Send WASM files to the xtblish server.')
-    .version('1.0.0')
-    .requiredOption('-s, --source <path>', 'input Assembly Script source file path (e.g. index.ts)')
-    .requiredOption('-u, --user <id>', 'input your user ID (e.g. 123)')
-    .option('-d, --debug', 'use the debug build')
+program
+    .name("xtblish CLI")
+    .description("Send WASM files to the xtblish server.")
+    .version("1.0.0")
+    .requiredOption("-s, --source <path>", "input Assembly Script source file path (e.g. index.ts)")
+    .requiredOption("-u, --user <id>", "input your user ID (e.g. 123)")
+    .requiredOption("-c, --config <path>", "input configuration file, e.g. xtblish.json")
     .parse();
 const options = program.opts();
 main();
 async function main() {
-    const check = checkEnvVariables();
-    if (isError(check)) {
+    const jsonResult = checkEnvVariables(options.config);
+    if (isError(jsonResult)) {
         return;
     }
-    const result = await compileAssemblyScript(options.source);
-    if (isError(result)) {
+    const compileResult = await compileAssemblyScript(options.source, jsonResult.data);
+    if (isError(compileResult)) {
         return;
     }
-    const hashResult = hashWasmFile(`build/${options.debug ? "debug" : "release"}.wasm`);
+    const hashResult = hashWasmFile(jsonResult.data);
     if (isError(hashResult)) {
         return;
     }
-    const response = await postApplication(hashResult.data, options.user);
-    if (isError(response)) {
+    const responseResult = await postApplication(hashResult.data, options.user);
+    if (isError(responseResult)) {
         return;
     }
-    console.log(`Status Code: ${response.data.statusCode}
-    Body: ${JSON.stringify(response.data.body)}`);
+    console.log(`Status Code: ${responseResult.data.statusCode}
+    Body: ${JSON.stringify(responseResult.data.body)}`);
 }
 // -------------------------- //  // -------------------------- // // -------------------------- //
 // -------------------------- //  // -------------------------- // // -------------------------- //
 // -------------------------- //  // -------------------------- // // -------------------------- //
-async function compileAssemblyScript(pathToIndex) {
-    if (!fs.statSync(pathToIndex)) {
-        return failure(`Assembly script file under '${pathToIndex}' is not found!`);
+async function compileAssemblyScript(source, config) {
+    try {
+        fs.statSync(source);
+        // Release alternative:
+        // asc --outFile build/release.wasm --textFile build/release.wat --sourceMap false --optimizeLevel 3 --shrinkLevel 0 --converge false --noAssert false --bindings esm
+        const { error, stdout, stderr, stats } = await asc.main([
+            source,
+            "--outFile",
+            `${config.outDir}/debug.wasm`,
+            "--textFile",
+            `${config.outDir}/debug.wat`,
+            "--debug",
+            "--sourceMap",
+            "false",
+            "--bindings",
+            "esm",
+        ]);
+        if (error) {
+            console.log(stderr);
+            return failure(error.message);
+        }
     }
-    const { error, stdout, stderr, stats } = await asc.main([pathToIndex, "--optimize"]);
-    if (error) {
-        console.log(stderr);
-        return failure(error.message);
+    catch (e) {
+        return failure(`Error" ${e}`);
     }
     return ok(0);
 }
-function hashWasmFile(filePath) {
-    if (!filePath) {
-        return failure("WASM file (AS_FILE) not defined!");
+function hashWasmFile(config) {
+    const filePath = `${config.outDir}/debug.wasm`;
+    if (!config.secret) {
+        return failure("Secret does not exist!");
     }
-    if (!fs.statSync(filePath)) {
-        return failure(`WASM file under '${filePath}' is not found!`);
+    let wasmFile = Buffer.from("");
+    try {
+        wasmFile = fs.readFileSync(filePath);
     }
-    const wasmFile = fs.readFileSync(filePath);
+    catch (e) {
+        return failure(`Failed to read from '${filePath}' error ${e}`);
+    }
     let dataToHash = Buffer.alloc(512 + 4, 0x00); // in order: config, size
     dataToHash = Buffer.concat([dataToHash, wasmFile]);
     dataToHash.writeUInt32LE(wasmFile.length, 512); // Write size of main.wasm
-    if (!process.env.HMAC_SECRET) {
-        return failure("HMAC Secret does not exist!");
-    }
-    const hash = crypto.createHmac('sha256', process.env.HMAC_SECRET).update(dataToHash).digest();
+    const hash = crypto.createHmac("sha256", config.secret).update(dataToHash).digest();
     return ok(Buffer.concat([hash, dataToHash]));
 }
 async function postApplication(data, userId) {
@@ -71,10 +89,10 @@ async function postApplication(data, userId) {
     try {
         response = await got.post(`${process.env.SERVER_URL}/firmware/${userId}`, {
             body: data,
-            responseType: 'json',
+            responseType: "json",
             headers: {
-                'Content-Type': 'application/octet-stream',
-                'Content-Length': `${data.length}`,
+                "Content-Type": "application/octet-stream",
+                "Content-Length": `${data.length}`,
             },
         });
     }
@@ -83,12 +101,20 @@ async function postApplication(data, userId) {
     }
     return ok(response);
 }
-function checkEnvVariables() {
+function checkEnvVariables(config) {
     if (!process.env.SERVER_URL) {
+        // This is temporary for now.
         return failure("Cannot find 'SERVER_URL' under .env");
     }
-    if (!process.env.HMAC_SECRET) {
-        return failure("Cannot find 'HMAC_SECRET' under .env");
+    if (!config) {
+        return failure("Configuration path is empty");
     }
-    return ok(0);
+    let obj;
+    try {
+        obj = JSON.parse(fs.readFileSync(config, "utf8"));
+    }
+    catch (e) {
+        return failure(`Failed to read or parse JSON with error: ${e}`);
+    }
+    return ok(obj);
 }
