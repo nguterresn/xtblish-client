@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { program } from "commander";
 import got from "got";
 import asc from "assemblyscript/asc";
@@ -62,7 +63,7 @@ async function compileAssemblyScript(source, config) {
         }
     }
     catch (e) {
-        return failure(`Error" ${e}`);
+        return failure(`Error -> ${e}`);
     }
     return ok(0);
 }
