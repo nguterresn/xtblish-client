@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { program } from "commander";
 import got from "got";
 import asc from "assemblyscript/asc";
