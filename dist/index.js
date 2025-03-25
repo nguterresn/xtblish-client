@@ -8,7 +8,7 @@ import { failure, ok, isError } from "./utils.js";
 program
     .name("xtblish CLI")
     .description("Send WASM files to the xtblish server.")
-    .version("1.0.12")
+    .version("1.0.14")
     .requiredOption("-s, --source <path>", "input Assembly Script source file path (e.g. index.ts)")
     .requiredOption("-u, --user <id>", "input your user ID (e.g. 123)")
     .requiredOption("-c, --config <path>", "input configuration file, e.g. xtblish.json")
@@ -25,7 +25,7 @@ async function main() {
     if (isError(compileResult)) {
         return;
     }
-    const hashResult = hashWasmFile(jsonResult.data);
+    const hashResult = hashAndCreateBinary(jsonResult.data);
     if (isError(hashResult)) {
         return;
     }
@@ -66,23 +66,31 @@ async function compileAssemblyScript(source, config) {
     }
     return ok(0);
 }
-function hashWasmFile(config) {
-    const filePath = `${config.outDir}/debug.wasm`;
+function hashAndCreateBinary(config) {
+    const wasmFilePath = `${config.outDir}/debug.wasm`;
+    const signedBinFilePath = `${config.outDir}/signed-debug.bin`;
     if (!config.secret) {
         return failure("Secret does not exist!");
     }
     let wasmFile = Buffer.from("");
     try {
-        wasmFile = fs.readFileSync(filePath);
+        wasmFile = fs.readFileSync(wasmFilePath);
     }
     catch (e) {
-        return failure(`Failed to read from '${filePath}' error ${e}`);
+        return failure(`Failed to read from '${wasmFilePath}', error ${e}.`);
     }
     let dataToHash = Buffer.alloc(512 + 4, 0x00); // in order: config, size
     dataToHash = Buffer.concat([dataToHash, wasmFile]);
     dataToHash.writeUInt32LE(wasmFile.length, 512); // Write size of main.wasm
     const hash = crypto.createHmac("sha256", config.secret).update(dataToHash).digest();
-    return ok(Buffer.concat([hash, dataToHash]));
+    const data = Buffer.concat([hash, dataToHash]);
+    try {
+        fs.writeFileSync(signedBinFilePath, data);
+    }
+    catch (e) {
+        return failure(`Failed to write to '${signedBinFilePath}', error ${e}.`);
+    }
+    return ok(data);
 }
 async function postApplication(data, userId, isDev) {
     if (!isDev) {

@@ -18,7 +18,7 @@ interface xtblishConfig {
 program
   .name("xtblish CLI")
   .description("Send WASM files to the xtblish server.")
-  .version("1.0.13")
+  .version("1.0.14")
   .requiredOption("-s, --source <path>", "input Assembly Script source file path (e.g. index.ts)")
   .requiredOption("-u, --user <id>", "input your user ID (e.g. 123)")
   .requiredOption("-c, --config <path>", "input configuration file, e.g. xtblish.json")
@@ -40,7 +40,7 @@ async function main() {
   if (isError(compileResult)) {
     return;
   }
-  const hashResult = hashWasmFile((jsonResult as Ok<xtblishConfig>).data);
+  const hashResult = hashAndCreateBinary((jsonResult as Ok<xtblishConfig>).data);
   if (isError(hashResult)) {
     return;
   }
@@ -94,8 +94,9 @@ async function compileAssemblyScript(
   return ok(0);
 }
 
-function hashWasmFile(config: xtblishConfig): Result<Buffer<ArrayBuffer>> {
-  const filePath = `${config.outDir}/debug.wasm`;
+function hashAndCreateBinary(config: xtblishConfig): Result<Buffer<ArrayBuffer>> {
+  const wasmFilePath = `${config.outDir}/debug.wasm`;
+  const signedBinFilePath = `${config.outDir}/signed-debug.bin`;
 
   if (!config.secret) {
     return failure("Secret does not exist!");
@@ -103,9 +104,9 @@ function hashWasmFile(config: xtblishConfig): Result<Buffer<ArrayBuffer>> {
 
   let wasmFile = Buffer.from("");
   try {
-    wasmFile = fs.readFileSync(filePath);
+    wasmFile = fs.readFileSync(wasmFilePath);
   } catch (e) {
-    return failure(`Failed to read from '${filePath}' error ${e}`);
+    return failure(`Failed to read from '${wasmFilePath}', error ${e}.`);
   }
 
   let dataToHash = Buffer.alloc(512 + 4, 0x00); // in order: config, size
@@ -113,8 +114,15 @@ function hashWasmFile(config: xtblishConfig): Result<Buffer<ArrayBuffer>> {
   dataToHash.writeUInt32LE(wasmFile.length, 512); // Write size of main.wasm
 
   const hash = crypto.createHmac("sha256", config.secret).update(dataToHash).digest();
+  const data = Buffer.concat([hash, dataToHash]);
 
-  return ok(Buffer.concat([hash, dataToHash]));
+  try {
+    fs.writeFileSync(signedBinFilePath, data);
+  } catch (e) {
+    return failure(`Failed to write to '${signedBinFilePath}', error ${e}.`);
+  }
+
+  return ok(data);
 }
 
 async function postApplication(
