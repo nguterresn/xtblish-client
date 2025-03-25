@@ -5,7 +5,6 @@ import got from "got";
 import asc from "assemblyscript/asc";
 import crypto from "crypto";
 import fs from "fs";
-import dotenv from "dotenv";
 import { failure, ok, isError } from "./utils.js";
 
 import type { PlainResponse } from "got";
@@ -16,15 +15,14 @@ interface xtblishConfig {
   outDir: string;
 }
 
-dotenv.config();
-
 program
   .name("xtblish CLI")
   .description("Send WASM files to the xtblish server.")
-  .version("1.0.0")
+  .version("1.0.12")
   .requiredOption("-s, --source <path>", "input Assembly Script source file path (e.g. index.ts)")
   .requiredOption("-u, --user <id>", "input your user ID (e.g. 123)")
   .requiredOption("-c, --config <path>", "input configuration file, e.g. xtblish.json")
+  .option("-d, --dev", "post firmware locally", false)
   .parse();
 const options = program.opts();
 
@@ -48,7 +46,8 @@ async function main() {
   }
   const responseResult = await postApplication(
     (hashResult as Ok<Buffer<ArrayBuffer>>).data,
-    options.user
+    options.user,
+    options.dev
   );
   if (isError(responseResult)) {
     return;
@@ -120,11 +119,16 @@ function hashWasmFile(config: xtblishConfig): Result<Buffer<ArrayBuffer>> {
 
 async function postApplication(
   data: Buffer<ArrayBuffer>,
-  userId: number
+  userId: number,
+  isDev: boolean
 ): Promise<Result<PlainResponse>> {
+  if (!isDev) {
+    return failure("Production mode is not supported yet.");
+  }
+
   let response;
   try {
-    response = await got.post(`${process.env.SERVER_URL}/firmware/${userId}`, {
+    response = await got.post(`http://192.168.0.140:3000/firmware/${userId}`, {
       body: data,
       responseType: "json",
       headers: {
@@ -133,17 +137,13 @@ async function postApplication(
       },
     });
   } catch (e: any) {
-    return failure(`On attempt to POST /${process.env.SERVER_URL}/firmware/${userId}: ${e}`);
+    return failure(`On attempt to POST /firmware/${userId}: ${e instanceof Error ? e.message : e}`);
   }
 
   return ok(response);
 }
 
 function checkEnvVariables(config: string): Result<xtblishConfig> {
-  if (!process.env.SERVER_URL) {
-    // This is temporary for now.
-    return failure("Cannot find 'SERVER_URL' under .env");
-  }
   if (!config) {
     return failure("Configuration path is empty");
   }
