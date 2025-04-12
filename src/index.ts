@@ -77,7 +77,6 @@ async function compileAssemblyScript(
       `${config.outDir}/debug.wasm`,
       "--textFile",
       `${config.outDir}/debug.wat`,
-      "--debug",
       "--sourceMap",
       "false",
       "--bindings",
