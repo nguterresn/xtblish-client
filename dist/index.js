@@ -8,7 +8,7 @@ import { failure, ok, isError } from "./utils.js";
 program
     .name("xtblish CLI")
     .description("Send WASM files to the xtblish server.")
-    .version("1.0.14")
+    .version("1.0.15")
     .requiredOption("-s, --source <path>", "input Assembly Script source file path (e.g. index.ts)")
     .requiredOption("-u, --user <id>", "input your user ID (e.g. 123)")
     .requiredOption("-c, --config <path>", "input configuration file, e.g. xtblish.json")
@@ -47,10 +47,9 @@ async function compileAssemblyScript(source, config) {
         const { error, stdout, stderr, stats } = await asc.main([
             source,
             "--outFile",
-            `${config.outDir}/debug.wasm`,
+            `${config.outDir}/main.wasm`,
             "--textFile",
-            `${config.outDir}/debug.wat`,
-            "--debug",
+            `${config.outDir}/main.wat`,
             "--sourceMap",
             "false",
             "--bindings",
@@ -67,8 +66,8 @@ async function compileAssemblyScript(source, config) {
     return ok(0);
 }
 function hashAndCreateBinary(config) {
-    const wasmFilePath = `${config.outDir}/debug.wasm`;
-    const signedBinFilePath = `${config.outDir}/signed-debug.bin`;
+    const wasmFilePath = `${config.outDir}/main.wasm`;
+    const signedBinFilePath = `${config.outDir}/signed-main.bin`;
     if (!config.secret) {
         return failure("Secret does not exist!");
     }
