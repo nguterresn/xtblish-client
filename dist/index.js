@@ -8,7 +8,7 @@ import { failure, ok, isError } from "./utils.js";
 program
     .name("xtblish CLI")
     .description("Send WASM files to the xtblish server.")
-    .version("1.0.17")
+    .version("1.0.18")
     .requiredOption("-s, --source <path>", "input Assembly Script source file path (e.g. index.ts)")
     .requiredOption("-u, --user <id>", "input your user ID (e.g. 123)")
     .requiredOption("-c, --config <path>", "input configuration file, e.g. xtblish.json")
@@ -50,7 +50,7 @@ async function compileAssemblyScript(source, config) {
             `${config.outDir}/main.wasm`,
             "--textFile",
             `${config.outDir}/main.wat`,
-            "-target",
+            "--target",
             "release",
             "-Ospeed",
             "--bindings",

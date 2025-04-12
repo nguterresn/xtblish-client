@@ -1,6 +1,6 @@
 {
   "name": "xtblish-client",
-  "version": "1.0.18",
+  "version": "1.0.19",
   "description": "Compile, sign and send a WASM binary to xtblish",
   "main": "dist/index.js",
   "files": [
