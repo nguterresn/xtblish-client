@@ -8,11 +8,11 @@ import { failure, ok, isError } from "./utils.js";
 program
     .name("xtblish CLI")
     .description("Send WASM files to the xtblish server.")
-    .version("1.0.18")
+    .version("1.0.20")
     .requiredOption("-s, --source <path>", "input Assembly Script source file path (e.g. index.ts)")
     .requiredOption("-u, --user <id>", "input your user ID (e.g. 123)")
     .requiredOption("-c, --config <path>", "input configuration file, e.g. xtblish.json")
-    .option("-d, --dev", "post firmware locally", false)
+    .option("-d, --dev", "post app locally", false)
     .parse();
 const options = program.opts();
 main();
@@ -98,7 +98,7 @@ async function postApplication(data, userId, isDev) {
     }
     let response;
     try {
-        response = await got.post(`http://192.168.0.140:3000/firmware/${userId}`, {
+        response = await got.post(`http://192.168.0.140:3000/app/${userId}`, {
             body: data,
             responseType: "json",
             headers: {
@@ -108,7 +108,7 @@ async function postApplication(data, userId, isDev) {
         });
     }
     catch (e) {
-        return failure(`On attempt to POST /firmware/${userId}: ${e instanceof Error ? e.message : e}`);
+        return failure(`On attempt to POST /app/${userId}: ${e instanceof Error ? e.message : e}`);
     }
     return ok(response);
 }
