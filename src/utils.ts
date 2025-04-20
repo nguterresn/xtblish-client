@@ -1,23 +1,50 @@
+import tracer from "tracer";
 
-export type Failure = { ok: boolean, error: Error };
-export type Ok<T> = { ok: boolean, data: T };
-export type Result<T> = Ok<T> | Failure;
+const logger = tracer.console({
+  format: "{{timestamp}} <{{title}}> - {{message}}",
+});
 
-export function isError<T>(result: Result<T>): boolean {
-  if (result.ok == false) {
-    console.log((result as Failure).error.message);
+export abstract class Result<T> {
+  isOk(): boolean {
+    return this instanceof Ok;
   }
-  return result.ok == false;
+  isError(): boolean {
+    return !this.isOk();
+  }
+
+  abstract unwrap(): T;
 }
 
-export function isOk<T>(result: Result<T>): boolean {
-  return result.ok == true;
+class Ok<T> extends Result<T> {
+  data: T;
+  constructor(data: T) {
+    super();
+    this.data = data;
+  }
+
+  unwrap(): T {
+    return this.data;
+  }
 }
 
-export function ok<T>(_data: T): Ok<T> {
-  return { ok: true, data: _data };
+class Failure extends Result<any> {
+  message: string;
+  constructor(message: string) {
+    super();
+    this.message = message;
+
+    logger.error(message);
+  }
+
+  unwrap(): any {
+    throw this.message;
+  }
+}
+
+export function ok<T>(data: T): Ok<T> {
+  return new Ok<T>(data);
 }
 
 export function failure(message: string): Failure {
-  return { ok: false, error: new Error(message) };
+  return new Failure(message);
 }

@@ -1,8 +1,11 @@
 .env
 .DS_Store
+.venv
+*keys*
 *xtblish*
 
 node_modules
 package-lock.json
 build
 dist
+local

@@ -1,15 +1,34 @@
-export function isError(result) {
-    if (result.ok == false) {
-        console.log(result.error.message);
+export class Result {
+    isOk() {
+        return this instanceof Ok;
     }
-    return result.ok == false;
+    isError() {
+        return !this.isOk();
+    }
 }
-export function isOk(result) {
-    return result.ok == true;
+class Ok extends Result {
+    constructor(data) {
+        super();
+        this.data = data;
+    }
+    unwrap() {
+        return this.data;
+    }
 }
-export function ok(_data) {
-    return { ok: true, data: _data };
+class Failure extends Result {
+    constructor(name, message) {
+        super();
+        this.message = message;
+        const date = new Date();
+        console.log(`[${date.getUTCSeconds()}:${date.getUTCMilliseconds()}] - "${name}": ${message}`);
+    }
+    unwrap() {
+        throw this.message;
+    }
 }
-export function failure(message) {
-    return { ok: false, error: new Error(message) };
+export function ok(data) {
+    return new Ok(data);
+}
+export function failure(name, message) {
+    return new Failure(name, message);
 }
