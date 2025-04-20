@@ -1,33 +1,14 @@
 import asc from "assemblyscript/asc";
 import { fs } from "assemblyscript/util/node.js";
 import got, { PlainResponse } from "got";
-import { failure, ok, Result } from "./utils.js";
 import { sign } from "crypto";
-
-interface xtblishConfig {
-  outDir: string;
-  signKey: string;
-}
+import { failure, ok, Result } from "./utils/result.js";
+import { xtblishConfig } from "./config.js";
 
 export interface buildOptions {
   source: string;
-  user: string;
+  group: string;
   config: string;
-}
-
-export function checkEnvVariables(config: string): Result<xtblishConfig> {
-  if (!config) {
-    return failure("Configuration path is empty");
-  }
-
-  let obj;
-  try {
-    obj = JSON.parse(fs.readFileSync(config, "utf8"));
-  } catch (e) {
-    return failure(`Failed to read or parse JSON with error: ${e}`);
-  }
-
-  return ok(obj as xtblishConfig);
 }
 
 export async function compileAssemblyScript(
@@ -59,11 +40,13 @@ export async function compileAssemblyScript(
   return ok(0);
 }
 
-export function signAndCreateBinary(config: xtblishConfig): Result<Buffer<ArrayBuffer>> {
+export function signAndCreateBinary(
+  config: xtblishConfig
+): Result<Buffer<ArrayBuffer>> {
   const wasmFilePath = `${config.outDir}/main.wasm`;
   const signedBinFilePath = `${config.outDir}/signed-main.bin`;
 
-  if (!config.signKey) {
+  if (!config.user.signKey) {
     return failure("Secret does not exist!");
   }
 
@@ -78,14 +61,7 @@ export function signAndCreateBinary(config: xtblishConfig): Result<Buffer<ArrayB
   dataToSign = Buffer.concat([dataToSign, wasmFile]);
   dataToSign.writeUInt32LE(wasmFile.length, 512); // Write size of main.wasm
 
-  let key: string;
-  try {
-    key = fs.readFileSync(config.signKey, "utf-8");
-  } catch (e) {
-    return failure(`Failed to read from '${config.signKey}', error ${e}.`);
-  }
-
-  const signature = sign(null, dataToSign, key); // Signature is 64 bytes long.
+  const signature = sign(null, dataToSign, config.user.signKey); // Signature is 64 bytes long.
   const data = Buffer.concat([signature, dataToSign]);
 
   try {
@@ -99,20 +75,28 @@ export function signAndCreateBinary(config: xtblishConfig): Result<Buffer<ArrayB
 
 export async function postApplication(
   data: Buffer<ArrayBuffer>,
-  userId: string
+  config: xtblishConfig,
+  groupId: string
 ): Promise<Result<PlainResponse>> {
   let response;
   try {
-    response = await got.post(`http://192.168.0.140:3000/app/${userId}`, {
-      body: data,
-      responseType: "json",
-      headers: {
-        "Content-Type": "application/octet-stream",
-        "Content-Length": `${data.length}`,
-      },
-    });
+    response = await got.post(
+      `http://192.168.0.140:3000/app/${config.org.id}/${config.user.id}/${groupId}`,
+      {
+        body: data,
+        responseType: "json",
+        headers: {
+          "Content-Type": "application/octet-stream",
+          "Content-Length": `${data.length}`,
+        },
+      }
+    );
   } catch (e: any) {
-    return failure(`On attempt to POST /app/${userId}: ${e instanceof Error ? e.message : e}`);
+    return failure(
+      `On attempt to POST /app/${config.org.id}/${config.user.id}/${groupId}: ${
+        e instanceof Error ? e.message : e
+      }`
+    );
   }
 
   return ok(response);
