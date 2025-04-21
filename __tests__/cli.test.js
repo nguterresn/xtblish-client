@@ -34,6 +34,8 @@ describe('CLI', () => {
     expect(jsonObj.user.apiKey).toBeDefined();
     expect(jsonObj.user.id).toBeDefined();
     expect(jsonObj.user.signKey).toBeDefined();
+    expect(jsonObj.org).toBeDefined();
+    expect(jsonObj.org.id).toBeDefined();
 
     // expect(jsonObj.outImageDir).toBeDefined();
   });
@@ -80,6 +82,9 @@ describe('CLI', () => {
         id: 123,
         signKey: "12345",
         apiKey: "12345"
+      },
+      org: {
+        id: 1
       }
     }
     const groupId = 1;

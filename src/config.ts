@@ -6,4 +6,7 @@ export interface xtblishConfig {
     signKey: string;
     apiKey: string; // Later change to JWT token?
   };
+  org: {
+    id: number;
+  };
 }

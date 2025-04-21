@@ -106,7 +106,7 @@ export async function postApplication(
   let response;
   try {
     response = await got.post(
-      `http://192.168.0.140:3000/app/${config.user.id}/${groupId}`,
+      `http://192.168.0.140:3000/app/${config.org.id}/${config.user.id}/${groupId}`,
       {
         body: data,
         responseType: "json",
@@ -119,7 +119,7 @@ export async function postApplication(
     );
   } catch (e: any) {
     return failure(
-      `On attempt to POST /app/${config.user.id}/${groupId}: ${
+      `On attempt to POST /app/${config.org.id}/${config.user.id}/${groupId}: ${
         e instanceof Error ? e.message : e
       }`
     );
