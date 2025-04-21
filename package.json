@@ -18,7 +18,7 @@
     "build": "node --loader ts-node/esm src/index.ts",
     "start": "node ./dist/index.js",
     "dev": "tsc && node ./dist/index.js",
-    "test": "node --experimental-vm-modules ./node_modules/.bin/jest"
+    "test": "tsc && node --experimental-vm-modules ./node_modules/.bin/jest"
   },
   "devDependencies": {
     "@types/express": "^5.0.1",

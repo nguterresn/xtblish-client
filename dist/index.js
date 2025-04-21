@@ -1,12 +1,18 @@
 #!/usr/bin/env node
 import { program } from "commander";
-import { checkEnvVariables, compileAssemblyScript, signAndCreateBinary, postApplication, } from "./build.js";
-program.name("xtblish CLI").version("1.0.21");
+import tracer from "tracer";
+import { compileAssemblyScript, signEncryptApp, postApplication, } from "./build.js";
+import { checkEnvVariables } from "./utils/config.js";
+import { readFile, writeFile } from "./utils/file.js";
+const logger = tracer.console({
+    format: "{{timestamp}} <{{title}}> - {{message}}",
+});
+program.name("xtblish CLI").version("1.1.0");
 program
     .command("build")
     .description("Compile, sign, encrypt and deploy an xtblish application.")
     .requiredOption("-s, --source <path>", "input Assembly Script source file path (e.g. index.ts)")
-    .requiredOption("-u, --user <id>", "input your user ID (e.g. 123)")
+    .requiredOption("-g, --group <id>", "input your group ID (e.g. 123)")
     .requiredOption("-c, --config <path>", "input configuration file, e.g. xtblish.json")
     .action(handleCommandBuild);
 program
@@ -24,19 +30,35 @@ async function handleCommandBuild(options) {
     if (jsonResult.isError()) {
         return;
     }
-    const compileResult = await compileAssemblyScript(options.source, jsonResult.unwrap());
+    const config = jsonResult.unwrap();
+    const compileResult = await compileAssemblyScript(options.source, config);
     if (compileResult.isError()) {
         return;
     }
-    const hashResult = signAndCreateBinary(jsonResult.unwrap());
-    if (hashResult.isError()) {
+    const wasmApp = readFile(compileResult.unwrap());
+    if (wasmApp.isError()) {
         return;
     }
-    const responseResult = await postApplication(hashResult.unwrap(), options.user);
+    const appResult = signEncryptApp(wasmApp.unwrap(), config);
+    if (appResult.isError()) {
+        return;
+    }
+    const writeResult = writeFile(`${config.outAppDir}/enc-app.bin`, appResult.unwrap());
+    if (writeResult.isError()) {
+        return;
+    }
+    const responseResult = await postApplication(writeResult.unwrap(), config, options.group);
     if (responseResult.isError()) {
         return;
     }
-    console.log(`Status Code: ${responseResult.unwrap().statusCode}
+    logger.info(`Status Code: ${responseResult.unwrap().statusCode}
     Body: ${JSON.stringify(responseResult.unwrap().body)}`);
 }
-function handleCommandProvision(options) { }
+function handleCommandProvision(options) {
+    const jsonResult = checkEnvVariables(options.config);
+    if (jsonResult.isError()) {
+        return;
+    }
+    const config = jsonResult.unwrap();
+    logger.error(`Provision is not ready yet!`);
+}

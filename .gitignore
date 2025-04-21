@@ -2,7 +2,7 @@
 .DS_Store
 .venv
 *keys*
-*xtblish*
+xtblish.*
 
 node_modules
 package-lock.json

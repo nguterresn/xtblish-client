@@ -6,17 +6,19 @@ import tracer from "tracer";
 import {
   buildOptions,
   compileAssemblyScript,
-  signAndCreateBinary,
+  signEncryptApp,
   postApplication,
 } from "./build.js";
 import { checkEnvVariables } from "./utils/config.js";
 import { provisionOptions } from "./provision.js";
+import { readFile, writeFile } from "./utils/file.js";
+import { xtblishConfig } from "./config.js";
 
 const logger = tracer.console({
   format: "{{timestamp}} <{{title}}> - {{message}}",
 });
 
-program.name("xtblish CLI").version("1.0.21");
+program.name("xtblish CLI").version("1.1.0");
 
 program
   .command("build")
@@ -52,17 +54,31 @@ async function handleCommandBuild(options: buildOptions) {
   if (jsonResult.isError()) {
     return;
   }
-  const config = jsonResult.unwrap();
+  const config: xtblishConfig = jsonResult.unwrap();
   const compileResult = await compileAssemblyScript(options.source, config);
   if (compileResult.isError()) {
     return;
   }
-  const hashResult = signAndCreateBinary(config);
-  if (hashResult.isError()) {
+
+  const wasmApp = readFile(compileResult.unwrap());
+  if (wasmApp.isError()) {
+    return;
+  }
+
+  const appResult = signEncryptApp(wasmApp.unwrap(), config);
+  if (appResult.isError()) {
+    return;
+  }
+
+  const writeResult = writeFile(
+    `${config.outAppDir}/enc-app.bin`,
+    appResult.unwrap()
+  );
+  if (writeResult.isError()) {
     return;
   }
   const responseResult = await postApplication(
-    hashResult.unwrap(),
+    writeResult.unwrap(),
     config,
     options.group
   );
@@ -81,6 +97,7 @@ function handleCommandProvision(options: provisionOptions) {
   if (jsonResult.isError()) {
     return;
   }
+  const config = jsonResult.unwrap();
 
-  logger.info(`Provision Done!`);
+  logger.error(`Provision is not ready yet!`);
 }

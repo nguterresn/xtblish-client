@@ -1,0 +1,9 @@
+{
+  "outAppDir": "temp/app/build",
+  "outImageDir": "temp/image/build",
+  "user": {
+    "id": 123,
+    "signKey": "12345",
+    "apiKey": "12345"
+  }
+}

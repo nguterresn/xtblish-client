@@ -1,11 +1,9 @@
 export interface xtblishConfig {
-  outDir: string;
+  outAppDir: string;
+  outImageDir: string;
   user: {
     id: number;
     signKey: string;
-  };
-  org: {
-    id: number;
-    provisionJWTToken: string;
+    apiKey: string; // Later change to JWT token?
   };
 }
