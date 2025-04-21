@@ -7,6 +7,13 @@ import { failure, ok, Result } from "./utils/result.js";
 import { xtblishConfig } from "./config.js";
 import { readFile } from "./utils/file.js";
 
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
+
+// These two lines get the current file's directory
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 export interface buildOptions {
   source: string;
   group: string;
@@ -46,7 +53,7 @@ export function signEncryptApp(
   app: Buffer,
   config: xtblishConfig
 ): Result<Buffer> {
-  const encPubKeyPath = "./src/other/enc_pub.pem";
+  const encPubKeyPath = join(__dirname, "other", "enc_pub.pem");
 
   if (!config.user.signKey) {
     return failure("Secret does not exist!");
