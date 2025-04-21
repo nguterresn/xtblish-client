@@ -113,7 +113,7 @@ export async function postApplication(
         headers: {
           "Content-Type": "application/octet-stream",
           "Content-Length": `${data.length}`,
-          Authorization: `Bearer ${config.user.apiKey}`,
+          Authorization: `${config.user.apiKey}`,
         },
       }
     );

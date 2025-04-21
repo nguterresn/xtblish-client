@@ -18,7 +18,7 @@ const logger = tracer.console({
   format: "{{timestamp}} <{{title}}> - {{message}}",
 });
 
-program.name("xtblish CLI").version("1.1.2");
+program.name("xtblish CLI").version("1.1.4");
 
 program
   .command("build")
