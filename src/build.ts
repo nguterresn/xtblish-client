@@ -2,16 +2,9 @@ import { Buffer } from "node:buffer";
 import { statSync } from "node:fs";
 import asc from "assemblyscript/asc";
 import got, { PlainResponse } from "got";
-import { createCipheriv, randomBytes, sign, publicEncrypt } from "crypto";
+import { sign } from "crypto";
 import { failure, ok, Result } from "./utils/result.js";
 import { xtblishConfig } from "./config.js";
-import { readFile } from "./utils/file.js";
-
-import { fileURLToPath } from "url";
-import { dirname, join } from "path";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 export interface buildOptions {
   source: string;
@@ -49,8 +42,6 @@ export async function compileAssemblyScript(
 }
 
 export function signApp(app: Buffer, config: xtblishConfig): Result<Buffer> {
-  const encPubKeyPath = join(__dirname, "..", "other", "enc_pub.pem");
-
   if (!config.user.signKey) {
     return failure("Secret does not exist!");
   }
@@ -70,6 +61,7 @@ export function signApp(app: Buffer, config: xtblishConfig): Result<Buffer> {
 
   const dataToEncrypt = Buffer.concat([signature, dataToSign]);
 
+  // const encPubKeyPath = join(__dirname, "..", "other", "enc_pub.pem");
   // let encPubKey = readFile(encPubKeyPath);
   // if (encPubKey.isError()) {
   //   return encPubKey;
@@ -105,7 +97,7 @@ export async function postApplication(
   let response;
   try {
     response = await got.post(
-      `http://192.168.0.140:3000/app/${config.org.id}/${config.user.id}/${groupId}`,
+      `http://192.168.0.140:3000/app/${config.org.id}/${groupId}`,
       {
         body: data,
         responseType: "json",
@@ -118,7 +110,7 @@ export async function postApplication(
     );
   } catch (e: any) {
     return failure(
-      `On attempt to POST /app/${config.org.id}/${config.user.id}/${groupId}: ${
+      `On attempt to POST /app/${config.org.id}/${groupId}: ${
         e instanceof Error ? e.message : e
       }`
     );

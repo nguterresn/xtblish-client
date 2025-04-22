@@ -10,9 +10,10 @@ import {
   postApplication,
 } from "./build.js";
 import { checkEnvVariables } from "./utils/config.js";
-import { provisionOptions } from "./provision.js";
+import { getFactoryImage, provisionOptions } from "./provision.js";
 import { readFile, writeFile } from "./utils/file.js";
 import { xtblishConfig } from "./config.js";
+import { execSync } from "node:child_process";
 
 const logger = tracer.console({
   format: "{{timestamp}} <{{title}}> - {{message}}",
@@ -42,7 +43,8 @@ program
     "-c, --config <path>",
     "input configuration file, e.g. xtblish.json"
   )
-  .option("-f, --file <path>", "Custom board YAML file (Zephyr)")
+  .option("-f, --flash", "Flash")
+  .option("-y, --yaml <path>", "Custom board YAML file (Zephyr)")
   .option("-d, --dts <path>", "Custom board device tree file (Zephyr)")
   .option("-k, --kconfig <path>", "Device Kconfig file (Zephyr)")
   .action(handleCommandProvision);
@@ -92,12 +94,37 @@ async function handleCommandBuild(options: buildOptions) {
   );
 }
 
-function handleCommandProvision(options: provisionOptions) {
+async function handleCommandProvision(options: provisionOptions) {
   const jsonResult = checkEnvVariables(options.config);
   if (jsonResult.isError()) {
     return;
   }
   const config = jsonResult.unwrap();
 
-  logger.error(`Provision is not ready yet!`);
+  // Get the factory image from the xtblish server.
+  const responseResult = await getFactoryImage(options.board, config);
+  if (responseResult.isError()) {
+    return;
+  }
+
+  // Temporaly save the file locally.
+  const file = `${config.outImageDir}/factory-${options.board}.bin`;
+  const writeResult = writeFile(file, responseResult.unwrap().rawBody!);
+  if (writeResult.isError()) {
+    return;
+  }
+
+  // Flash device
+  try {
+    execSync(
+      "/Users/nunonogueira/Projectos/zephyr-projects/modules/hal/espressif/tools/esptool_py/esptool.py " +
+        "--baud 921600 --before default_reset " +
+        "--after hard_reset write_flash " +
+        "-u --flash_mode dio --flash_freq 40m " +
+        `--flash_size detect 0x20000 ${file}`
+    );
+  } catch (e) {
+    logger.error(e);
+    return;
+  }
 }

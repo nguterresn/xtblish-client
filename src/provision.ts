@@ -5,34 +5,30 @@ import { failure, ok, Result } from "./utils/result.js";
 export interface provisionOptions {
   board: string;
   config: string;
+  flash?: boolean;
 }
 
-// export function requestMinimalBuild(
-//   board: string,
-//   config: xtblishConfig
-// ): void {}
+export async function getFactoryImage(
+  board: string,
+  config: xtblishConfig
+): Promise<Result<PlainResponse>> {
+  let response;
+  try {
+    response = await got.get(
+      `http://192.168.0.140:3000/factory/image/${board}`,
+      {
+        headers: {
+          Authorization: `${config.user.apiKey}`,
+        },
+      }
+    );
+  } catch (e: any) {
+    return failure(
+      `On attempt to GET /factory/image/${board}: ${
+        e instanceof Error ? e.message : e
+      }`
+    );
+  }
 
-// async function getMinimalImage(
-//   board: string,
-//   config: xtblishConfig
-// ): Promise<Result<PlainResponse>> {
-//   let response;
-//   try {
-//     response = await got.get(
-//       `http://192.168.0.140:3000/image/${config.user.id}/${board}`,
-//       {
-//         headers: {
-//           Authorization: `${config.user.apiKey}`,
-//         },
-//       }
-//     );
-//   } catch (e: any) {
-//     return failure(
-//       `On attempt to GET /image/${config.user.id}/${board}: ${
-//         e instanceof Error ? e.message : e
-//       }`
-//     );
-//   }
-
-//   return ok(response);
-// }
+  return ok(response);
+}
