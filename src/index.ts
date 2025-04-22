@@ -6,7 +6,7 @@ import tracer from "tracer";
 import {
   buildOptions,
   compileAssemblyScript,
-  signEncryptApp,
+  signApp,
   postApplication,
 } from "./build.js";
 import { checkEnvVariables } from "./utils/config.js";
@@ -18,11 +18,11 @@ const logger = tracer.console({
   format: "{{timestamp}} <{{title}}> - {{message}}",
 });
 
-program.name("xtblish CLI").version("1.1.4");
+program.name("xtblish CLI").version("1.1.5");
 
 program
   .command("build")
-  .description("Compile, sign, encrypt and deploy an xtblish application.")
+  .description("Compile, sign and deploy an xtblish application.")
   .requiredOption(
     "-s, --source <path>",
     "input Assembly Script source file path (e.g. index.ts)"
@@ -65,7 +65,7 @@ async function handleCommandBuild(options: buildOptions) {
     return;
   }
 
-  const appResult = signEncryptApp(wasmApp.unwrap(), config);
+  const appResult = signApp(wasmApp.unwrap(), config);
   if (appResult.isError()) {
     return;
   }

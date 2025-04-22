@@ -1,7 +1,7 @@
 import { jest } from '@jest/globals';
 import { execSync } from 'child_process';
 import got from "got";
-import { signEncryptApp, postApplication } from "../dist/build"
+import { signApp, postApplication } from "../dist/build"
 import { checkEnvVariables } from "../dist/utils/config"
 import { Result } from '../dist/utils/result';
 
@@ -51,23 +51,23 @@ describe('CLI', () => {
     }
     const app = Buffer.alloc(16, 0xff);
 
-    result = signEncryptApp(app, config);
+    result = signApp(app, config);
     expect(result).toBeInstanceOf(Result);
     expect(result.isError()).toEqual(true);
 
     // It works when a valid key is added.
     config.user.signKey = testSignKey;
-    result = signEncryptApp(app, config);
+    result = signApp(app, config);
     expect(result.isOk()).toEqual(true);
 
-    const data = result.unwrap();
-    const symKeyLength = data.readUInt16LE();
+    // const data = result.unwrap();
+    // const symKeyLength = data.readUInt16LE();
 
-    // SymKey is always 256 bytes long.
-    expect(symKeyLength).toEqual(256);
+    // // SymKey is always 256 bytes long.
+    // expect(symKeyLength).toEqual(256);
 
-    const padding = 12; // AES encrypts in 16 byte blocks.
-    expect(data.length).toEqual(2 + symKeyLength + 16 + (64 + 512 + 4 + app.length + padding));
+    // const padding = 12; // AES encrypts in 16 byte blocks.
+    // expect(data.length).toEqual(2 + symKeyLength + 16 + (64 + 512 + 4 + app.length + padding));
   });
 
   it('Deploys app to xtblish server', async () => {

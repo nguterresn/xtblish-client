@@ -48,10 +48,7 @@ export async function compileAssemblyScript(
   return ok(`${config.outAppDir}/main.wasm`);
 }
 
-export function signEncryptApp(
-  app: Buffer,
-  config: xtblishConfig
-): Result<Buffer> {
+export function signApp(app: Buffer, config: xtblishConfig): Result<Buffer> {
   const encPubKeyPath = join(__dirname, "..", "other", "enc_pub.pem");
 
   if (!config.user.signKey) {
@@ -73,29 +70,31 @@ export function signEncryptApp(
 
   const dataToEncrypt = Buffer.concat([signature, dataToSign]);
 
-  let encPubKey = readFile(encPubKeyPath);
-  if (encPubKey.isError()) {
-    return encPubKey;
-  }
+  // let encPubKey = readFile(encPubKeyPath);
+  // if (encPubKey.isError()) {
+  //   return encPubKey;
+  // }
 
-  // Hybrid: generate sym key and encrypt it.
-  const symKey = randomBytes(16);
-  const iv = randomBytes(16);
-  const cipher = createCipheriv("aes-128-cbc", symKey, iv);
+  // // Hybrid: generate sym key and encrypt it.
+  // const symKey = randomBytes(16);
+  // const iv = randomBytes(16);
+  // const cipher = createCipheriv("aes-128-cbc", symKey, iv);
 
-  const encryptedSymKey = publicEncrypt(encPubKey.unwrap(), symKey);
-  const encryptedSymKeyLength = Buffer.alloc(2);
-  encryptedSymKeyLength.writeUint16LE(encryptedSymKey.length);
+  // const encryptedSymKey = publicEncrypt(encPubKey.unwrap(), symKey);
+  // const encryptedSymKeyLength = Buffer.alloc(2);
+  // encryptedSymKeyLength.writeUint16LE(encryptedSymKey.length);
 
-  return ok(
-    Buffer.concat([
-      encryptedSymKeyLength, // 2 bytes
-      encryptedSymKey, // 256 bytes
-      iv, // 16 bytes
-      cipher.update(dataToEncrypt),
-      cipher.final(),
-    ])
-  );
+  // return ok(
+  //   Buffer.concat([
+  //     encryptedSymKeyLength, // 2 bytes
+  //     encryptedSymKey, // 256 bytes
+  //     iv, // 16 bytes
+  //     cipher.update(dataToEncrypt),
+  //     cipher.final(),
+  //   ])
+  // );
+
+  return ok(dataToEncrypt);
 }
 
 export async function postApplication(
