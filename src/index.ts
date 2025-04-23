@@ -109,9 +109,13 @@ async function handleCommandProvision(options: provisionOptions) {
   }
 
   // Temporaly save the file locally.
-  const file = `${config.outImageDir}/factory-${options.board}.bin`;
+  const file = `${config.outImageDir}/factory-bootimage.bin`;
   const writeResult = writeFile(file, responseResult.unwrap().rawBody!);
   if (writeResult.isError()) {
+    return;
+  }
+
+  if (!options.flash) {
     return;
   }
 
