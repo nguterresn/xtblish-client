@@ -73,12 +73,13 @@ async function handleCommandBuild(options: buildOptions) {
   }
 
   const writeResult = writeFile(
-    `${config.outAppDir}/enc-app.bin`,
+    `${config.outAppDir}/signed-app.bin`,
     appResult.unwrap()
   );
   if (writeResult.isError()) {
     return;
   }
+
   const responseResult = await postApplication(
     writeResult.unwrap(),
     config,
