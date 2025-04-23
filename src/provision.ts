@@ -12,10 +12,11 @@ export async function getFactoryImage(
   board: string,
   config: xtblishConfig
 ): Promise<Result<PlainResponse>> {
+  const urlSafeBoard = board.replace(/\//g, "-");
   let response;
   try {
     response = await got.get(
-      `http://192.168.0.140:3000/factory/image/${board}`,
+      `http://192.168.0.140:3000/factory/image/${urlSafeBoard}`,
       {
         headers: {
           Authorization: `${config.user.apiKey}`,
@@ -24,7 +25,7 @@ export async function getFactoryImage(
     );
   } catch (e: any) {
     return failure(
-      `On attempt to GET /factory/image/${board}: ${
+      `On attempt to GET /factory/image/${urlSafeBoard}: ${
         e instanceof Error ? e.message : e
       }`
     );
