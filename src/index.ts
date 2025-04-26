@@ -11,15 +11,14 @@ import {
 } from "./build.js";
 import { checkEnvVariables } from "./utils/config.js";
 import { getFactoryImage, provisionOptions } from "./provision.js";
-import { readFile, writeFile } from "./utils/file.js";
+import { readFile, storeFile } from "./utils/file.js";
 import { xtblishConfig } from "./config.js";
-import { execSync } from "node:child_process";
 
 const logger = tracer.console({
   format: "{{timestamp}} <{{title}}> - {{message}}",
 });
 
-program.name("xtblish CLI").version("1.1.5");
+program.name("xtblish CLI").version("1.1.7");
 
 program
   .command("build")
@@ -43,10 +42,6 @@ program
     "-c, --config <path>",
     "input configuration file, e.g. xtblish.json"
   )
-  .option("-f, --flash", "Flash")
-  .option("-y, --yaml <path>", "Custom board YAML file (Zephyr)")
-  .option("-d, --dts <path>", "Custom board device tree file (Zephyr)")
-  .option("-k, --kconfig <path>", "Device Kconfig file (Zephyr)")
   .action(handleCommandProvision);
 
 program.parse();
@@ -72,16 +67,17 @@ async function handleCommandBuild(options: buildOptions) {
     return;
   }
 
-  const writeResult = writeFile(
-    `${config.outAppDir}/signed-app.bin`,
-    appResult.unwrap()
+  const writeResult = storeFile(
+    appResult.unwrap(),
+    `${config.outAppDir}`,
+    "signed-app.bin"
   );
   if (writeResult.isError()) {
     return;
   }
 
   const responseResult = await postApplication(
-    writeResult.unwrap(),
+    appResult.unwrap(),
     config,
     options.group
   );
@@ -108,28 +104,14 @@ async function handleCommandProvision(options: provisionOptions) {
     return;
   }
 
-  // Temporaly save the file locally.
-  const file = `${config.outImageDir}/factory-bootimage.bin`;
-  const writeResult = writeFile(file, responseResult.unwrap().rawBody!);
+  const writeResult = storeFile(
+    responseResult.unwrap().rawBody!,
+    config.outImageDir,
+    "factory-bootimage.bin"
+  );
   if (writeResult.isError()) {
     return;
   }
 
-  if (!options.flash) {
-    return;
-  }
-
-  // Flash device
-  try {
-    execSync(
-      "/Users/nunonogueira/Projectos/zephyr-projects/modules/hal/espressif/tools/esptool_py/esptool.py " +
-        "--baud 921600 --before default_reset " +
-        "--after hard_reset write_flash " +
-        "-u --flash_mode dio --flash_freq 40m " +
-        `--flash_size detect 0x20000 ${file}`
-    );
-  } catch (e) {
-    logger.error(e);
-    return;
-  }
+  logger.info(`Image is stored under ${writeResult.unwrap()}`);
 }

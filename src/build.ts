@@ -42,7 +42,7 @@ export async function compileAssemblyScript(
 }
 
 export function signApp(app: Buffer, config: xtblishConfig): Result<Buffer> {
-  if (!config.user.signKey) {
+  if (!config.org.signKey) {
     return failure("Secret does not exist!");
   }
 
@@ -54,37 +54,12 @@ export function signApp(app: Buffer, config: xtblishConfig): Result<Buffer> {
   // Sign.
   let signature;
   try {
-    signature = sign(null, dataToSign, config.user.signKey); // Signature is 64 bytes long.
+    signature = sign(null, dataToSign, config.org.signKey); // Signature is 64 bytes long.
   } catch (e) {
     return failure(`Failed to sign app`);
   }
 
   const dataToEncrypt = Buffer.concat([signature, dataToSign]);
-
-  // const encPubKeyPath = join(__dirname, "..", "other", "enc_pub.pem");
-  // let encPubKey = readFile(encPubKeyPath);
-  // if (encPubKey.isError()) {
-  //   return encPubKey;
-  // }
-
-  // // Hybrid: generate sym key and encrypt it.
-  // const symKey = randomBytes(16);
-  // const iv = randomBytes(16);
-  // const cipher = createCipheriv("aes-128-cbc", symKey, iv);
-
-  // const encryptedSymKey = publicEncrypt(encPubKey.unwrap(), symKey);
-  // const encryptedSymKeyLength = Buffer.alloc(2);
-  // encryptedSymKeyLength.writeUint16LE(encryptedSymKey.length);
-
-  // return ok(
-  //   Buffer.concat([
-  //     encryptedSymKeyLength, // 2 bytes
-  //     encryptedSymKey, // 256 bytes
-  //     iv, // 16 bytes
-  //     cipher.update(dataToEncrypt),
-  //     cipher.final(),
-  //   ])
-  // );
 
   return ok(dataToEncrypt);
 }

@@ -31,11 +31,11 @@ describe('CLI', () => {
     const jsonObj = result.unwrap()
     expect(jsonObj.outAppDir).toBeDefined();
     expect(jsonObj.user).toBeDefined();
-    expect(jsonObj.user.apiKey).toBeDefined();
     expect(jsonObj.user.id).toBeDefined();
-    expect(jsonObj.user.signKey).toBeDefined();
+    expect(jsonObj.user.apiKey).toBeDefined();
     expect(jsonObj.org).toBeDefined();
     expect(jsonObj.org.id).toBeDefined();
+    expect(jsonObj.org.signKey).toBeDefined();
 
     // expect(jsonObj.outImageDir).toBeDefined();
   });
@@ -45,8 +45,11 @@ describe('CLI', () => {
     let config = {
       user: {
         id: 123,
-        signKey: "12345",
         apiKey: "12345"
+      },
+      org: {
+        id: 1,
+        signKey: "12345"
       }
     }
     const app = Buffer.alloc(16, 0xff);
@@ -56,18 +59,9 @@ describe('CLI', () => {
     expect(result.isError()).toEqual(true);
 
     // It works when a valid key is added.
-    config.user.signKey = testSignKey;
+    config.org.signKey = testSignKey;
     result = signApp(app, config);
     expect(result.isOk()).toEqual(true);
-
-    // const data = result.unwrap();
-    // const symKeyLength = data.readUInt16LE();
-
-    // // SymKey is always 256 bytes long.
-    // expect(symKeyLength).toEqual(256);
-
-    // const padding = 12; // AES encrypts in 16 byte blocks.
-    // expect(data.length).toEqual(2 + symKeyLength + 16 + (64 + 512 + 4 + app.length + padding));
   });
 
   it('Deploys app to xtblish server', async () => {
@@ -80,11 +74,11 @@ describe('CLI', () => {
     const config = {
       user: {
         id: 123,
-        signKey: "12345",
         apiKey: "12345"
       },
       org: {
-        id: 1
+        id: 1,
+        signKey: "12345",
       }
     }
     const groupId = 1;

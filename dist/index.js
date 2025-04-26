@@ -3,11 +3,12 @@ import { program } from "commander";
 import tracer from "tracer";
 import { compileAssemblyScript, signApp, postApplication, } from "./build.js";
 import { checkEnvVariables } from "./utils/config.js";
-import { readFile, writeFile } from "./utils/file.js";
+import { getFactoryImage } from "./provision.js";
+import { readFile, storeFile } from "./utils/file.js";
 const logger = tracer.console({
     format: "{{timestamp}} <{{title}}> - {{message}}",
 });
-program.name("xtblish CLI").version("1.1.5");
+program.name("xtblish CLI").version("1.1.6");
 program
     .command("build")
     .description("Compile, sign and deploy an xtblish application.")
@@ -20,9 +21,9 @@ program
     .description("Setup a virtual xtblish device.")
     .requiredOption("-b, --board <name>", "Device board (Zephyr)")
     .requiredOption("-c, --config <path>", "input configuration file, e.g. xtblish.json")
-    .option("-f, --file <path>", "Custom board YAML file (Zephyr)")
-    .option("-d, --dts <path>", "Custom board device tree file (Zephyr)")
-    .option("-k, --kconfig <path>", "Device Kconfig file (Zephyr)")
+    // .option("-y, --yaml <path>", "Custom board YAML file (Zephyr)")
+    // .option("-d, --dts <path>", "Custom board device tree file (Zephyr)")
+    // .option("-k, --kconfig <path>", "Device Kconfig file (Zephyr)")
     .action(handleCommandProvision);
 program.parse();
 async function handleCommandBuild(options) {
@@ -43,22 +44,31 @@ async function handleCommandBuild(options) {
     if (appResult.isError()) {
         return;
     }
-    const writeResult = writeFile(`${config.outAppDir}/enc-app.bin`, appResult.unwrap());
+    const writeResult = storeFile(appResult.unwrap(), `${config.outAppDir}`, "signed-app.bin");
     if (writeResult.isError()) {
         return;
     }
-    const responseResult = await postApplication(writeResult.unwrap(), config, options.group);
+    const responseResult = await postApplication(appResult.unwrap(), config, options.group);
     if (responseResult.isError()) {
         return;
     }
     logger.info(`Status Code: ${responseResult.unwrap().statusCode}
     Body: ${JSON.stringify(responseResult.unwrap().body)}`);
 }
-function handleCommandProvision(options) {
+async function handleCommandProvision(options) {
     const jsonResult = checkEnvVariables(options.config);
     if (jsonResult.isError()) {
         return;
     }
     const config = jsonResult.unwrap();
-    logger.error(`Provision is not ready yet!`);
+    // Get the factory image from the xtblish server.
+    const responseResult = await getFactoryImage(options.board, config);
+    if (responseResult.isError()) {
+        return;
+    }
+    const writeResult = storeFile(responseResult.unwrap().rawBody, config.outImageDir, "factory-bootimage.bin");
+    if (writeResult.isError()) {
+        return;
+    }
+    logger.info(`Image is stored under ${writeResult.unwrap()}`);
 }

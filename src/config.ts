@@ -3,10 +3,10 @@ export interface xtblishConfig {
   outImageDir: string;
   user: {
     id: number;
-    signKey: string;
-    apiKey: string; // Later change to JWT token?
+    apiKey: string;
   };
   org: {
     id: number;
+    signKey: string;
   };
 }

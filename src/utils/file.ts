@@ -1,5 +1,5 @@
 import { failure, ok, Result } from "./result.js";
-import { readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 
 export function readFile(path: string): Result<Buffer> {
   let data;
@@ -12,12 +12,25 @@ export function readFile(path: string): Result<Buffer> {
   return ok(data);
 }
 
-export function writeFile(path: string, data: Buffer): Result<Buffer> {
+export function storeFile(
+  data: Buffer,
+  dirPath: string,
+  fileName: string
+): Result<string> {
+  let path = "";
+  const arrPath = dirPath.includes("/") ? dirPath.split("/") : [dirPath];
   try {
+    arrPath.forEach((key) => {
+      path += path.length > 0 ? `/${key}` : key;
+      if (!existsSync(path)) {
+        mkdirSync(path);
+      }
+    });
+    path += `/${fileName}`;
     writeFileSync(path, data);
   } catch (e) {
-    return failure(`Failed to write to '${path}', error ${e}.`);
+    return failure(`Couldn't store the file ${e}`);
   }
 
-  return ok(data);
+  return ok(path);
 }

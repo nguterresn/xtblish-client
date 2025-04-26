@@ -3,10 +3,10 @@
   "outImageDir": "temp/image/build",
   "user": {
     "id": 123,
-    "signKey": "12345",
     "apiKey": "12345"
   },
   "org": {
-    "id": 123
+    "id": 123,
+    "signKey": "12345"
   }
 }
