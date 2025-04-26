@@ -36,8 +36,6 @@ describe('CLI', () => {
     expect(jsonObj.org).toBeDefined();
     expect(jsonObj.org.id).toBeDefined();
     expect(jsonObj.org.signKey).toBeDefined();
-
-    // expect(jsonObj.outImageDir).toBeDefined();
   });
 
   it('It signs and encrypts app safely', () => {

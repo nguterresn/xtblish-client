@@ -1,7 +1,8 @@
 import got, { PlainResponse } from "got";
 import { xtblishConfig } from "./config.js";
 import { failure, ok, Result } from "./utils/result.js";
-
+import dotenv from "dotenv";
+dotenv.config();
 export interface provisionOptions {
   board: string;
   config: string;
@@ -16,7 +17,7 @@ export async function getFactoryImage(
   let response;
   try {
     response = await got.get(
-      `http://192.168.0.140:3000/factory/image/${urlSafeBoard}`,
+      `http://${process.env.HOST}/factory/image/${urlSafeBoard}`,
       {
         headers: {
           Authorization: `${config.user.apiKey}`,

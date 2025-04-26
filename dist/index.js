@@ -8,7 +8,7 @@ import { readFile, storeFile } from "./utils/file.js";
 const logger = tracer.console({
     format: "{{timestamp}} <{{title}}> - {{message}}",
 });
-program.name("xtblish CLI").version("1.1.6");
+program.name("xtblish CLI").version("1.1.7");
 program
     .command("build")
     .description("Compile, sign and deploy an xtblish application.")
@@ -21,9 +21,6 @@ program
     .description("Setup a virtual xtblish device.")
     .requiredOption("-b, --board <name>", "Device board (Zephyr)")
     .requiredOption("-c, --config <path>", "input configuration file, e.g. xtblish.json")
-    // .option("-y, --yaml <path>", "Custom board YAML file (Zephyr)")
-    // .option("-d, --dts <path>", "Custom board device tree file (Zephyr)")
-    // .option("-k, --kconfig <path>", "Device Kconfig file (Zephyr)")
     .action(handleCommandProvision);
 program.parse();
 async function handleCommandBuild(options) {

@@ -5,6 +5,8 @@ import got, { PlainResponse } from "got";
 import { sign } from "crypto";
 import { failure, ok, Result } from "./utils/result.js";
 import { xtblishConfig } from "./config.js";
+import dotenv from "dotenv";
+dotenv.config();
 
 export interface buildOptions {
   source: string;
@@ -47,9 +49,9 @@ export function signApp(app: Buffer, config: xtblishConfig): Result<Buffer> {
   }
 
   // Allocate space for extra packet configuration.
-  let dataToSign = Buffer.alloc(512 + 4, 0xff); // 0xFF means erased
+  let dataToSign = Buffer.alloc(256 + 4, 0xff); // 0xFF means erased
   dataToSign = Buffer.concat([dataToSign, app]);
-  dataToSign.writeUInt32LE(app.length, 512); // Write size of main.wasm
+  dataToSign.writeUInt32LE(app.length, 256); // Write size of main.wasm
 
   // Sign.
   let signature;
@@ -72,14 +74,14 @@ export async function postApplication(
   let response;
   try {
     response = await got.post(
-      `http://192.168.0.140:3000/app/${config.org.id}/${groupId}`,
+      `http://${process.env.HOST}/app/${config.org.id}/${groupId}`,
       {
         body: data,
         responseType: "json",
         headers: {
           "Content-Type": "application/octet-stream",
           "Content-Length": `${data.length}`,
-          Authorization: `${config.user.apiKey}`,
+          Authorization: config.user.apiKey,
         },
       }
     );
