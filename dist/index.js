@@ -8,7 +8,7 @@ import { readFile, storeFile } from "./utils/file.js";
 const logger = tracer.console({
     format: "{{timestamp}} <{{title}}> - {{message}}",
 });
-program.name("xtblish CLI").version("1.1.9");
+program.name("xtblish CLI").version("1.1.10");
 program
     .command("build")
     .description("Compile, sign and deploy an xtblish application.")
@@ -58,6 +58,8 @@ async function handleCommandProvision(options) {
         return;
     }
     const config = jsonResult.unwrap();
+    logger.error(`Not ready yet`);
+    return; // Not applicable yet.
     // Get the factory image from the xtblish server.
     const responseResult = await getFactoryImage(options.board, config);
     if (responseResult.isError()) {
