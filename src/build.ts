@@ -75,6 +75,7 @@ export async function postApplication(
   try {
     response = await got.post(`https://${process.env.HOST}/app/${groupId}`, {
       body: data,
+      https: { rejectUnauthorized: false },
       responseType: "json",
       throwHttpErrors: false,
       headers: {
