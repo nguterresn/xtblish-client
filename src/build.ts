@@ -73,9 +73,10 @@ export async function postApplication(
 ): Promise<Result<PlainResponse>> {
   let response;
   try {
-    response = await got.post(`http://${process.env.HOST}/app/${groupId}`, {
+    response = await got.post(`https://${process.env.HOST}/app/${groupId}`, {
       body: data,
       responseType: "json",
+      throwHttpErrors: false,
       headers: {
         "Content-Type": "application/octet-stream",
         "Content-Length": `${data.length}`,
@@ -87,6 +88,14 @@ export async function postApplication(
       `On attempt to POST /app/${groupId}: ${
         e instanceof Error ? e.message : e
       }`
+    );
+  }
+
+  if (response && response.statusCode > 300) {
+    return failure(
+      `Failed to upload app under POST /app/${groupId}: ${JSON.stringify(
+        response.body
+      )}`
     );
   }
 

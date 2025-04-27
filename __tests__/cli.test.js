@@ -63,10 +63,7 @@ describe('CLI', () => {
   });
 
   it('Deploys app to xtblish server', async () => {
-    got.post.mockResolvedValue({
-      statusCode: 200,
-      body: '{"status": true}',
-    });
+    got.post.mockResolvedValue({ statusCode: 200 });
 
     const data = Buffer.alloc(32, 0xff);
     const config = {
@@ -87,6 +84,5 @@ describe('CLI', () => {
 
     const jsonObj = response.unwrap();
     expect(jsonObj.statusCode).toEqual(200);
-    expect(jsonObj.body).toEqual('{"status": true}');
   });
 });

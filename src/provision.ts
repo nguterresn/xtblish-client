@@ -17,7 +17,7 @@ export async function getFactoryImage(
   let response;
   try {
     response = await got.get(
-      `http://${process.env.HOST}/factory/image/${urlSafeBoard}`,
+      `https://${process.env.HOST}/factory/image/${urlSafeBoard}`,
       {
         headers: {
           Authorization: `${config.user.apiKey}`,

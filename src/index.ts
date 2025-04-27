@@ -18,7 +18,7 @@ const logger = tracer.console({
   format: "{{timestamp}} <{{title}}> - {{message}}",
 });
 
-program.name("xtblish CLI").version("1.1.9");
+program.name("xtblish CLI").version("1.1.10");
 
 program
   .command("build")
@@ -97,6 +97,8 @@ async function handleCommandProvision(options: provisionOptions) {
     return;
   }
   const config = jsonResult.unwrap();
+  logger.error(`Not ready yet`);
+  return; // Not applicable yet.
 
   // Get the factory image from the xtblish server.
   const responseResult = await getFactoryImage(options.board, config);
