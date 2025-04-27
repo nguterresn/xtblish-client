@@ -1,6 +1,6 @@
 {
   "name": "xtblish-client",
-  "version": "1.1.12",
+  "version": "1.1.14",
   "description": "Deploy and manage an xtblish application",
   "main": "dist/index.js",
   "files": [
@@ -10,7 +10,7 @@
     "xtblish"
   ],
   "bin": {
-    "xtblish": "NODE_TLS_REJECT_UNAUTHORIZED=0 ./dist/index.js"
+    "xtblish": "./dist/index.js"
   },
   "author": "Nuno Nogueira",
   "license": "MIT",
