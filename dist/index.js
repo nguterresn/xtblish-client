@@ -8,7 +8,7 @@ import { readFile, storeFile } from "./utils/file.js";
 const logger = tracer.console({
     format: "{{timestamp}} <{{title}}> - {{message}}",
 });
-program.name("xtblish CLI").version("1.1.7");
+program.name("xtblish CLI").version("1.1.9");
 program
     .command("build")
     .description("Compile, sign and deploy an xtblish application.")

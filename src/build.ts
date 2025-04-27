@@ -73,21 +73,18 @@ export async function postApplication(
 ): Promise<Result<PlainResponse>> {
   let response;
   try {
-    response = await got.post(
-      `http://${process.env.HOST}/app/${config.org.id}/${groupId}`,
-      {
-        body: data,
-        responseType: "json",
-        headers: {
-          "Content-Type": "application/octet-stream",
-          "Content-Length": `${data.length}`,
-          Authorization: config.user.apiKey,
-        },
-      }
-    );
+    response = await got.post(`http://${process.env.HOST}/app/${groupId}`, {
+      body: data,
+      responseType: "json",
+      headers: {
+        "Content-Type": "application/octet-stream",
+        "Content-Length": `${data.length}`,
+        Authorization: config.user.apiKey,
+      },
+    });
   } catch (e: any) {
     return failure(
-      `On attempt to POST /app/${config.org.id}/${groupId}: ${
+      `On attempt to POST /app/${groupId}: ${
         e instanceof Error ? e.message : e
       }`
     );
