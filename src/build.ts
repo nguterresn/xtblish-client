@@ -12,16 +12,17 @@ export interface buildOptions {
   source: string;
   group: string;
   config: string;
+  flags: string | null;
 }
 
 export async function compileAssemblyScript(
-  source: string,
+  options: buildOptions,
   config: xtblishConfig
 ): Promise<Result<string>> {
   try {
-    statSync(source);
-    const { error, stdout, stderr, stats } = await asc.main([
-      source,
+    statSync(options.source);
+    let args = [
+      options.source,
       "--outFile",
       `${config.outAppDir}/main.wasm`,
       "--textFile",
@@ -31,7 +32,11 @@ export async function compileAssemblyScript(
       "-Ospeed",
       "--bindings",
       "esm",
-    ]);
+    ];
+    if (options.flags) {
+      args.concat(options.flags.split(" "));
+    }
+    const { error, stdout, stderr, stats } = await asc.main(args);
     if (error) {
       console.log(stderr);
       return failure(error.message);

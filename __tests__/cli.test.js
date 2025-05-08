@@ -1,7 +1,7 @@
 import { jest } from '@jest/globals';
 import { execSync } from 'child_process';
 import got from "got";
-import { signApp, postApplication } from "../dist/build"
+import { signApp, postApplication, compileAssemblyScript } from "../dist/build"
 import { checkEnvVariables } from "../dist/utils/config"
 import { Result } from '../dist/utils/result';
 
@@ -84,5 +84,26 @@ describe('CLI', () => {
 
     const jsonObj = response.unwrap();
     expect(jsonObj.statusCode).toEqual(200);
+  });
+
+  it('Compile AssemblyScript with flags', async () => {
+    const options = {
+      source: "local/assembly/index.ts",
+      group: 123,
+      config: "local/xtblish.json",
+      flags: "--stats"
+    }
+    const config = {
+      user: {
+        id: 123,
+        apiKey: "12345"
+      },
+      org: {
+        id: 1,
+        signKey: "12345"
+      }
+    }
+    const response = await compileAssemblyScript(options, config);
+    expect(response.isOk()).toBeTruthy();
   });
 });

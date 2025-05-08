@@ -10,7 +10,6 @@ import {
   postApplication,
 } from "./build.js";
 import { checkEnvVariables } from "./utils/config.js";
-import { getFactoryImage, provisionOptions } from "./provision.js";
 import { readFile, storeFile } from "./utils/file.js";
 import { xtblishConfig } from "./config.js";
 
@@ -18,7 +17,7 @@ const logger = tracer.console({
   format: "{{timestamp}} <{{title}}> - {{message}}",
 });
 
-program.name("xtblish CLI").version("1.1.10");
+program.name("xtblish CLI").version("1.1.17");
 
 program
   .command("build")
@@ -32,17 +31,11 @@ program
     "-c, --config <path>",
     "input configuration file, e.g. xtblish.json"
   )
-  .action(handleCommandBuild);
-
-program
-  .command("provision")
-  .description("Setup a virtual xtblish device.")
-  .requiredOption("-b, --board <name>", "Device board (Zephyr)")
-  .requiredOption(
-    "-c, --config <path>",
-    "input configuration file, e.g. xtblish.json"
+  .option(
+    "-f, --flags <flags>",
+    "optional flags to add to the Assembly Script compilation"
   )
-  .action(handleCommandProvision);
+  .action(handleCommandBuild);
 
 program.parse();
 
@@ -52,7 +45,7 @@ async function handleCommandBuild(options: buildOptions) {
     return;
   }
   const config: xtblishConfig = jsonResult.unwrap();
-  const compileResult = await compileAssemblyScript(options.source, config);
+  const compileResult = await compileAssemblyScript(options, config);
   if (compileResult.isError()) {
     return;
   }
@@ -89,31 +82,4 @@ async function handleCommandBuild(options: buildOptions) {
     `Status Code: ${responseResult.unwrap().statusCode}
     Body: ${JSON.stringify(responseResult.unwrap().body)}`
   );
-}
-
-async function handleCommandProvision(options: provisionOptions) {
-  const jsonResult = checkEnvVariables(options.config);
-  if (jsonResult.isError()) {
-    return;
-  }
-  const config = jsonResult.unwrap();
-  logger.error(`Not ready yet`);
-  return; // Not applicable yet.
-
-  // Get the factory image from the xtblish server.
-  const responseResult = await getFactoryImage(options.board, config);
-  if (responseResult.isError()) {
-    return;
-  }
-
-  const writeResult = storeFile(
-    responseResult.unwrap().rawBody!,
-    config.outImageDir,
-    "factory-bootimage.bin"
-  );
-  if (writeResult.isError()) {
-    return;
-  }
-
-  logger.info(`Image is stored under ${writeResult.unwrap()}`);
 }
