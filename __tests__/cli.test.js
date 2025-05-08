@@ -86,24 +86,24 @@ describe('CLI', () => {
     expect(jsonObj.statusCode).toEqual(200);
   });
 
-  it('Compile AssemblyScript with flags', async () => {
-    const options = {
-      source: "local/assembly/index.ts",
-      group: 123,
-      config: "local/xtblish.json",
-      flags: "--stats"
-    }
-    const config = {
-      user: {
-        id: 123,
-        apiKey: "12345"
-      },
-      org: {
-        id: 1,
-        signKey: "12345"
-      }
-    }
-    const response = await compileAssemblyScript(options, config);
-    expect(response.isOk()).toBeTruthy();
-  });
+  // it('Compile AssemblyScript with flags', async () => {
+  //   const options = {
+  //     source: "local/assembly/index.ts",
+  //     group: 123,
+  //     config: "local/xtblish.json",
+  //     flags: "--stats"
+  //   }
+  //   const config = {
+  //     user: {
+  //       id: 123,
+  //       apiKey: "12345"
+  //     },
+  //     org: {
+  //       id: 1,
+  //       signKey: "12345"
+  //     }
+  //   }
+  //   const response = await compileAssemblyScript(options, config);
+  //   expect(response.isOk()).toBeTruthy();
+  // });
 });

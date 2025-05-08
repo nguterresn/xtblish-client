@@ -8,7 +8,7 @@ import {
   compileAssemblyScript,
   signApp,
   postApplication,
-} from "./build.js";
+} from "./deploy.js";
 import { checkEnvVariables } from "./utils/config.js";
 import { readFile, storeFile } from "./utils/file.js";
 import { xtblishConfig } from "./config.js";
@@ -20,7 +20,7 @@ const logger = tracer.console({
 program.name("xtblish CLI").version("1.1.17");
 
 program
-  .command("build")
+  .command("deploy")
   .description("Compile, sign and deploy an xtblish application.")
   .requiredOption(
     "-s, --source <path>",
