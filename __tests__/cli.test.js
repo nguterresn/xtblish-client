@@ -1,7 +1,7 @@
 import { jest } from '@jest/globals';
 import { execSync } from 'child_process';
 import got from "got";
-import { signApp, postApplication, compileAssemblyScript } from "../dist/build"
+import { signApp, postApplication } from "../dist/deploy"
 import { checkEnvVariables } from "../dist/utils/config"
 import { Result } from '../dist/utils/result';
 
