@@ -4,6 +4,7 @@
 flowchart LR
     Compile --> |.wasm|Pack --> |header, size, app|Sign --> |signature, data|Deploy
     A@{ shape: cyl, label: "Org" } --> |ed21159.priv|Sign
+    B@{ shape: cyl, label: "User" } --> |API_KEY|Deploy
 ```
 
 ## Usage:
