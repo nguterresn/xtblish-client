@@ -12,7 +12,7 @@ flowchart LR
 The following command will deploy an _xtblish app_ to the group 123.
 
 ```bash
-xtblish deploy --source app/index.ts --config app/xtblish.json --group 123
+xtblish deploy --source app/index.ts --config .xtblish.json --group 123
 ```
 
 ## Features
